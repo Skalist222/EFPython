@@ -1,1 +1,5 @@
-/__*
+.one
+/__*__
+_*
+.gitignore
+test.py
