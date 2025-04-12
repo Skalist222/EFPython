@@ -1,5 +1,5 @@
 class SQLite_Type:
-    
+    # 12.04.2025
     field_name:str
     primary:bool
     unique:bool
@@ -14,6 +14,7 @@ class SQLite_Type:
         self.default = default
         self.autoincrement = autoincrement
         self.primary = primary
+        if self.autoincrement: self.primary = True
 
     def to_string(self):
         items = []

@@ -1,6 +1,6 @@
-import abc
 import sqlite3 
 
+# 12.04.2025
 
 class DataBase:
     connection=None

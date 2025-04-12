@@ -1,5 +1,6 @@
 from Entity_Framework.v_types import *
 from Entity_Framework.v_DB import *
+# 12.04.2025
 class SQLite_Table:
     sql_create_table:str
     db:DataBase
