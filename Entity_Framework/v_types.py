@@ -1,5 +1,6 @@
+# 12.04.2025
 class SQLite_Type:
-    
+
     field_name:str
     primary:bool
     unique:bool
@@ -14,14 +15,15 @@ class SQLite_Type:
         self.default = default
         self.autoincrement = autoincrement
         self.primary = primary
+        if self.autoincrement: self.primary = True
 
     def to_string(self):
         items = []
         items.append(self.field_name)
         if(self.primary):items.append("PRIMARY KEY")
+        if(self.autoincrement):items.append("AUTOINCREMENT")
         if(self.nullable):items.append("NULL")
         else: items.append("NOT NULL")
-        if(self.autoincrement):items.append("AUTOINCREMENT")
         if(self.unique):items.append("UNIQUE")
         return " ".join(items)
     # CREATE TABLE название_таблицы (название_столбца1 тип_данных атрибуты_столбца1, название_столбца2 тип_данных атрибуты_столбца2 ). 
@@ -55,7 +57,7 @@ class BOOl(BLOB):pass
 class BOOLEAN(BLOB):pass
 
 class IDINT(INTEGER):
-    unique=True
+    unique=False
     nullable=False
     default=None
     def __init__(self, autoincrement=True):

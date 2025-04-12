@@ -1,5 +1,7 @@
 from Entity_Framework.v_types import *
 from Entity_Framework.v_DB import *
+
+# 12.04.2025
 class SQLite_Table:
     sql_create_table:str
     db:DataBase
@@ -12,19 +14,15 @@ class SQLite_Table:
                 v:SQLite_Type = v 
                 fields_list.append(" ".join(['"'+k+'"',v.to_string()]))
         fields:str=", ".join(fields_list)
-        sql_create_table = f"CREATE TABLE {table_name} IF NOT EXISTS({fields})"
+        sql_create_table = f"CREATE TABLE IF NOT EXISTS {'"'+table_name+'"'}({fields})"
         self.db.execute(sql_create_table)
 
 
-
-class TemplateTable(SQLite_Table):
-    id=ID()
-    name=TEXT()
-    age=TEXT()
-    admin=BOOl()
-
-class TemplateTable2(SQLite_Table):
-    id=ID()
-    name=TEXT()
-    description=TEXT()
-    nomenclative_id=TEXT()
+class Users(SQLite_Table):
+    id = ID()
+    last_name =TEXT()
+    first_name = TEXT()
+    patr_name = TEXT()
+    login =TEXT()
+    password = TEXT()
+    role = TEXT()
