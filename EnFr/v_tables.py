@@ -54,7 +54,7 @@ class SQLite_Table:
     def get_all(self):
         return self.get()
     
-    def add(self,**kwargs):
+    def create(self,**kwargs):
         params ={}
         for field,v in self.__class__.__dict__.items():
             if(not field.startswith("__")):
@@ -70,7 +70,19 @@ class SQLite_Table:
 
         sql = f"INSERT INTO {self.table_name} ({", ".join(params.keys())}) VALUES ({", ".join(params.values())})"
         self.db.execute(sql)
-
+    def update(self,key,**kwargs):
+        params = []
+        for field,v in self.__class__.__dict__.items():
+            if(not field.startswith("__")):
+                field_type:SQLite_Type = v
+                if field_type.primary:
+                    WHERE = f"WHERE {field} = '{key}'"
+                else:
+                    params.append(f"{field} = '{kwargs[field]}'") 
+        sql = f"UPDATE {self.table_name} SET {', '.join(params)} {WHERE}"  
+        return self.db.execute(sql)
+                    
+                    
 
         
                     
