@@ -34,10 +34,10 @@ class SQLite(DataBase):
         self.connection.close()
 
     def valid_connection(self)->bool:
-        if not super().valid_connection(): return False
         try:
             if self.connection.in_transaction: return False
-            self.connection.cursor()
+            cursor = self.connection.cursor()
+            cursor.close()
             return True
         except: return False
     
@@ -47,14 +47,23 @@ class SQLite(DataBase):
         cursor = self.connection.cursor()
         cursor.execute(sql)
         result = cursor.fetchall()
+        cursor.close()
         if result is None: return []
         else: return result
         
    
     def execute(self,sql:str)->bool:
+        print("execute:",sql)
         cursor = self.connection.cursor()
         cursor.execute(sql)
-        if cursor.fetchone() is None: return False
-        else: return True
+        self.connection.commit()
+        
+        if cursor.lastrowid == -1:
+            cursor.close()
+            return False
+        else:
+            
+            cursor.close() 
+            return True
     
     # connection:Connection = sqlite3.connect()

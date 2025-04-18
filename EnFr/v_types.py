@@ -71,3 +71,9 @@ class TEXT_ID(TEXT):
     default=None
     def __init__(self):
         super().__init__(self.unique,True, self.nullable, self.default, self.autoincrement)
+
+class SQLITE_VARIANTS:
+    NUMBER_TYPES=[INT,INTEGER,ID,INTID,IDINT,FLOAT,REAL]
+    BOOLEAN_TYPES=[BOOLEAN,BOOl,BLOB]
+    TEXT_TYPES=[TEXT,TEXT_ID,STR,STRING]
+    
