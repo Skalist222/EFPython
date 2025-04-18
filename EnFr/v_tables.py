@@ -38,19 +38,22 @@ class SQLite_Table:
                     WHERE_LIST.append(f"{k} = '{v}'" )
         WHERE =""
         if(len(WHERE_LIST)>0):WHERE = " WHERE "+" AND ".join(WHERE_LIST)
-
         sql = f"SELECT * FROM {self.table_name}{WHERE}"
-        
         result = self.db.select(sql)
         if(result is []):return None
-        print(result)
-
-        
-        
         Table = namedtuple(self.table_name," ".join(self.fields))
-        print(Table)
+        tabrows = []
+        for row in result:
+            vals = {}
+            for field,val in zip(self.fields,row):
+                vals[field] = val
+            tabrows.append(Table(**vals))
+        return tabrows
 
         # print(sql)
+    def get_all(self):
+        return self.get()
+    
     def add(self,**kwargs):
         params ={}
         for field,v in self.__class__.__dict__.items():

@@ -44,6 +44,7 @@ class SQLite(DataBase):
             
 
     def select(self,sql:str)->list[dict]:
+        print("select:",sql)
         cursor = self.connection.cursor()
         cursor.execute(sql)
         result = cursor.fetchall()
