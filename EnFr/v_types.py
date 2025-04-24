@@ -16,6 +16,7 @@ class SQLite_Type:
         self.autoincrement = autoincrement
         self.primary = primary
         if self.autoincrement: self.primary = True
+        if self.primary: self.nullable = False
 
     def to_string(self):
         items = []
