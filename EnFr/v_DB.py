@@ -47,11 +47,19 @@ class SQLite(DataBase):
         print("select:",sql)
         cursor = self.connection.cursor()
         cursor.execute(sql)
+        columns = list(map(lambda x: x[0], cursor.description))
         result = cursor.fetchall()
-        cursor.close()
-        if result is None: return []
-        else: return result
-        
+
+        if(result):
+            retResult = []
+            for row in result:
+                retResult.append(dict(zip(columns, row)))
+            cursor.close()
+            return retResult
+        else:
+            cursor.close()
+            return []
+                
    
     def execute(self,sql:str)->bool:
         print("execute:",sql)
@@ -63,7 +71,6 @@ class SQLite(DataBase):
             cursor.close()
             return False
         else:
-            
             cursor.close() 
             return True
     

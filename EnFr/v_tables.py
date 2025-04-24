@@ -12,7 +12,7 @@ class SQLite_Table:
     table_name:str
     fields:list
     db:DataBase
-    def __init__(self,db:DataBase):
+    def __init__(self,db:DataBase,delete_not_use_columns:bool=False):
         self.fields=[]
         sql_create_table:str
         self.table_name = self.__class__.__name__
@@ -26,6 +26,27 @@ class SQLite_Table:
         fields:str=", ".join(fields_list)
         sql_create_table = f"CREATE TABLE IF NOT EXISTS {'"'+self.table_name+'"'}({fields})"
         self.db.execute(sql_create_table)
+
+        # Проверка на отсутствие нужных полей в таблице
+        columns_in_table = self.db.select(f"PRAGMA table_info({self.table_name})")
+        columns_names = [item['name'] for item in columns_in_table]
+
+        if(len(columns_names) < len(self.fields)):
+            l = list(set(self.fields)- set(columns_names))
+            for f in l:
+                fieldConfig = self.__class__.__dict__[f].to_string()
+                print(f"В таблице '{self.table_name}' отсутствует поле '{f} {fieldConfig}'!  Добавляем поле...  " )
+                self.db.execute(f"ALTER TABLE {self.table_name} ADD COLUMN {f} {fieldConfig};")  
+        elif(len(columns_names) > len(self.fields)):    
+            if(not delete_not_use_columns):
+                raise Exception(f"В таблице '{self.table_name}' присутствуют лишние поля!!!!\r\nПожалуйста, удалите лишние поля вручную или установите параметр 'delete_not_use_columns' в конструкторе на True.\r\nПример: {self.table_name}(database, delete_not_use_columns=True)")
+            else:
+                l = list(set(columns_names) - set(self.fields))
+                for f in l:
+                    self.db.execute(f"ALTER TABLE {self.table_name} DROP COLUMN {f};")
+
+
+        
     
     def get(self,**kwargs):
         # if "limit" in kwargs:
@@ -40,19 +61,26 @@ class SQLite_Table:
         if(len(WHERE_LIST)>0):WHERE = " WHERE "+" AND ".join(WHERE_LIST)
         sql = f"SELECT * FROM {self.table_name}{WHERE}"
         result = self.db.select(sql)
+
         if(result is []):return None
         Table = namedtuple(self.table_name," ".join(self.fields))
         tabrows = []
-        for row in result:
-            vals = {}
-            for field,val in zip(self.fields,row):
-                vals[field] = val
-            tabrows.append(Table(**vals))
-        return tabrows
+        for row in result: tabrows.append(Table(**row))
+        if(len(tabrows)==1):return tabrows[0]
+        else: return tabrows
 
         # print(sql)
     def get_all(self):
         return self.get()
+    def get_last(self):
+        sql = f"SELECT * FROM {self.table_name} ORDER BY id DESC LIMIT 1"
+        result = self.db.select(sql)
+        if(result is []):return None
+        Table = namedtuple(self.table_name," ".join(self.fields))
+        vals = {}
+        for field,val in zip(self.fields,result[0]):
+            vals[field] = val
+        return Table(**vals)
     
     def create(self,**kwargs):
         params ={}
@@ -70,6 +98,7 @@ class SQLite_Table:
 
         sql = f"INSERT INTO {self.table_name} ({", ".join(params.keys())}) VALUES ({", ".join(params.values())})"
         self.db.execute(sql)
+        return self.get_last()
     def update(self,key,**kwargs):
         params = []
         for field,v in self.__class__.__dict__.items():
