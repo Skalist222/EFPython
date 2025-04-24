@@ -1,17 +1,27 @@
-from abc import ABC
-from EnFr.v_tables import *
-from EnFr.v_DB import *
-from EnFr.v_types import *
 from collections import namedtuple
+from EnFr.tables import *
+from EnFr.database import *
+from EnFr.types import *
+from exceptions import *
 
-
-
-
-# 12.04.2025
-class SQLite_Table:
+# 24.04.2025
+class Table:
     table_name:str
     fields:list
     db:DataBase
+    @classmethod
+    def get(cls,**kwargs):pass
+    @classmethod
+    def get_all(cls):pass
+    @classmethod
+    def get_last(cls):pass
+    @classmethod
+    def create(cls,**kwargs):pass
+    @classmethod
+    def update(cls,key,**kwargs):pass
+
+
+class SQLite_Table(Table):
     def __init__(self,db:DataBase,delete_not_use_columns:bool=False):
         self.fields=[]
         sql_create_table:str
@@ -25,29 +35,25 @@ class SQLite_Table:
                 fields_list.append(" ".join(['"'+k+'"',v.to_string()]))
         fields:str=", ".join(fields_list)
         sql_create_table = f"CREATE TABLE IF NOT EXISTS {'"'+self.table_name+'"'}({fields})"
-        self.db.execute(sql_create_table)
+        self.db.execute(sql_create_table,False)
 
         # Проверка на отсутствие нужных полей в таблице
-        columns_in_table = self.db.select(f"PRAGMA table_info({self.table_name})")
+        columns_in_table = self.db.select(f"PRAGMA table_info({self.table_name})",False)
         columns_names = [item['name'] for item in columns_in_table]
-
         if(len(columns_names) < len(self.fields)):
             l = list(set(self.fields)- set(columns_names))
             for f in l:
                 fieldConfig = self.__class__.__dict__[f].to_string()
-                print(f"В таблице '{self.table_name}' отсутствует поле '{f} {fieldConfig}'!  Добавляем поле...  " )
                 self.db.execute(f"ALTER TABLE {self.table_name} ADD COLUMN {f} {fieldConfig};")  
+        # Проверка на наличие лишних полей в таблице 
         elif(len(columns_names) > len(self.fields)):    
             if(not delete_not_use_columns):
-                raise Exception(f"В таблице '{self.table_name}' присутствуют лишние поля!!!!\r\nПожалуйста, удалите лишние поля вручную или установите параметр 'delete_not_use_columns' в конструкторе на True.\r\nПример: {self.table_name}(database, delete_not_use_columns=True)")
+                raise FieldDeleteNotSetted(self.table_name)
             else:
                 l = list(set(columns_names) - set(self.fields))
                 for f in l:
                     self.db.execute(f"ALTER TABLE {self.table_name} DROP COLUMN {f};")
 
-
-        
-    
     def get(self,**kwargs):
         # if "limit" in kwargs:
         WHERE_LIST = []
@@ -81,17 +87,16 @@ class SQLite_Table:
         for field,val in zip(self.fields,result[0]):
             vals[field] = val
         return Table(**vals)
-    
     def create(self,**kwargs):
         params ={}
         for field,v in self.__class__.__dict__.items():
             if(not field.startswith("__")):
                 field_type:SQLite_Type = v
                 if (not field_type.nullable) and field not in kwargs and not field_type.autoincrement:
-                    raise Exception(f"Отсутствует обязательный параметр {field}")
+                    raise ImportantParametrNotSet(f"{field}")
                 
                 if field_type.autoincrement and field in kwargs: 
-                    raise Exception(f"Нельзя отправить {field} так как это автоматически инкрементируемое поле")
+                    raise SettedAutoincrementParametr(field)
                     
                 if field in kwargs:
                     params["'"+field+"'"] = "'"+str(kwargs[field])+"'"
@@ -107,7 +112,10 @@ class SQLite_Table:
                 if field_type.primary:
                     WHERE = f"WHERE {field} = '{key}'"
                 else:
-                    params.append(f"{field} = '{kwargs[field]}'") 
+                    try:
+                        params.append(f"{field} = '{kwargs[field]}'") 
+                    except KeyError:
+                        raise ImportantParametrNotSet(field)               
         sql = f"UPDATE {self.table_name} SET {', '.join(params)} {WHERE}"  
         return self.db.execute(sql)
                     

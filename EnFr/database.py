@@ -1,6 +1,6 @@
 import sqlite3 
 
-# 12.04.2025
+# 24.04.2025
 class DataBase:
     connection=None
     baseName:str
@@ -20,9 +20,9 @@ class DataBase:
             return True
         except: return False
     @classmethod
-    def select(self,sql:str)->list[dict]:pass
+    def select(self,sql:str,log:bool=True)->list[dict]:pass
     @classmethod
-    def execute(self,sql:str)->bool:pass
+    def execute(self,sql:str,log:bool=True)->bool:pass
 
 
 class SQLite(DataBase):
@@ -43,8 +43,8 @@ class SQLite(DataBase):
     
             
 
-    def select(self,sql:str)->list[dict]:
-        print("select:",sql)
+    def select(self,sql:str,log:bool=True)->list[dict]:
+        if log: print("select:",sql)
         cursor = self.connection.cursor()
         cursor.execute(sql)
         columns = list(map(lambda x: x[0], cursor.description))
@@ -61,8 +61,8 @@ class SQLite(DataBase):
             return []
                 
    
-    def execute(self,sql:str)->bool:
-        print("execute:",sql)
+    def execute(self,sql:str,log:bool=True)->bool:
+        if log: print("execute:",sql)
         cursor = self.connection.cursor()
         cursor.execute(sql)
         self.connection.commit()
